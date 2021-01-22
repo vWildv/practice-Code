@@ -23,4 +23,4 @@ Haskell 编写了AVL树，红黑树写了插入部分，删除部分待完成
 ![paxos-1](image/paxos1.png)
 ![paxos-2](image/paxos2.png)
 ## R
-海草数量分析案例，电子游戏效率分析案例
+海草数量分析案例，电子游戏销量分析案例
