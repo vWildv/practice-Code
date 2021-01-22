@@ -5,232 +5,224 @@
 #include <sys/time.h>
 #include <arpa/inet.h>
 #include <netdb.h>
-
-#define ICMP_SIZE (sizeof(struct icmp))
-#define ICMP_ECHO 8
-#define ICMP_ECHOREPLY 0
-#define BUF_SIZE 1024
-#define NUM   5    // ·¢ËÍ±¨ÎÄ´ÎÊı
+#include <iostream>
+using namespace std;
 
 #define UCHAR  unsigned char
 #define USHORT unsigned short
 #define UINT   unsigned int
 
-// ICMP±¨ÎÄÊı¾İ½á¹¹
+#define ICMP_SIZE (sizeof(struct icmp))
+#define ICMP_ECHO 8
+#define ICMP_ECHOREPLY 0
+#define BUF_SIZE 1024
+#define NUM   5    // å‘é€æŠ¥æ–‡æ¬¡æ•°
+char buf[BUF_SIZE] = {0}; //æ¥æ”¶ç¼“å†²åŒº
+
+// ICMPæŠ¥æ–‡æ•°æ®ç»“æ„
 struct icmp{
-    UCHAR           type;      // ÀàĞÍ
-    UCHAR           code;      // ´úÂë
-    USHORT          checksum;  // Ğ£ÑéºÍ
-    USHORT          id;        // ±êÊ¶·û
-    USHORT          sequence;  // ĞòºÅ
-    struct timeval  timestamp; // Ê±¼ä´Á
+    UCHAR           type;      // ç±»å‹
+    UCHAR           code;      // ä»£ç 
+    USHORT          checksum;  // æ ¡éªŒå’Œ
+    USHORT          id;        // æ ‡è¯†ç¬¦
+    USHORT          sequence;  // åºå·
+
+    //æ•°æ®æ®µ
+    struct timeval  timestamp; // æ—¶é—´æˆ³
 };
 
-
-// IPÊ×²¿Êı¾İ½á¹¹
+// IPé¦–éƒ¨æ•°æ®ç»“æ„
 struct ip{
-    // Ö÷»ú×Ö½ÚĞòÅĞ¶Ï
-    #if __BYTE_ORDER == __LITTLE_ENDIAN
-    UCHAR   hlen:4;        // Ê×²¿³¤¶È
-    UCHAR   version:4;     // °æ±¾
+    // ä¸»æœºå­—èŠ‚åºåˆ¤æ–­
+    #if __BYTE_ORDER==__LITTLE_ENDIAN
+    UCHAR   hlen:4;        // é¦–éƒ¨é•¿åº¦
+    UCHAR   version:4;     // ç‰ˆæœ¬
     #endif
-    #if __BYTE_ORDER == __BIG_ENDIAN
+    #if __BYTE_ORDER==__BIG_ENDIAN
     UCHAR   version:4;
     UCHAR   hlen:4;
     #endif
-    UCHAR   tos;             // ·şÎñÀàĞÍ
-    USHORT  len;             // ×Ü³¤¶È
-    USHORT  id;                // ±êÊ¶·û
-    USHORT  offset;            // ±êÖ¾ºÍÆ¬Æ«ÒÆ
-    UCHAR   ttl;            // Éú´æÊ±¼ä
-    UCHAR   protocol;       // Ğ­Òé
-    USHORT  checksum;       // Ğ£ÑéºÍ
-    struct in_addr ipsrc;    // 32Î»Ô´ipµØÖ·
-    struct in_addr ipdst;   // 32Î»Ä¿µÄipµØÖ·
+    UCHAR   tos;             // æœåŠ¡ç±»å‹
+    USHORT  len;             // æ€»é•¿åº¦
+    USHORT  id;                // æ ‡è¯†ç¬¦
+    USHORT  offset;            // æ ‡å¿—å’Œç‰‡åç§»
+    UCHAR   ttl;            // ç”Ÿå­˜æ—¶é—´
+    UCHAR   protocol;       // åè®®
+    USHORT  checksum;       // æ ¡éªŒå’Œ
+    struct  in_addr ipsrc;    // 32ä½æºipåœ°å€
+    struct  in_addr ipdst;   // 32ä½ç›®çš„ipåœ°å€
 };
 
+/**
+ * addr æŒ‡å‘éœ€æ ¡éªŒæ•°æ®ç¼“å†²åŒºçš„æŒ‡é’ˆ
+ * len  éœ€æ ¡éªŒæ•°æ®çš„æ€»é•¿åº¦ï¼ˆå­—èŠ‚å•ä½ï¼‰
+ */
+USHORT checkSum(USHORT *addr,int len){
+    UINT sum=0;
+    while(len>1){
+        sum+=*addr;
+        addr++;
+        len-=2;
+    }
+    // å¤„ç†å‰©ä¸‹çš„å­—èŠ‚
+    if(len==1){
+        sum+=*(UCHAR *)addr;
+    }
+    // å°†32ä½çš„é«˜16ä½ä¸ä½16ä½ç›¸åŠ 
+    sum=(sum>>16)+(sum&0xffff);
+    sum+=(sum>>16);
+    return (USHORT) ~sum;
+}
 
-char buf[BUF_SIZE] = {0};
+/**
+ * è¿”å›å€¼å•ä½ï¼šms
+ * begin å¼€å§‹æ—¶é—´æˆ³
+ * end   ç»“æŸæ—¶é—´æˆ³
+ */
+float timediff(struct timeval *be, struct timeval *en){
+    int n;
+    // å…ˆè®¡ç®—ä¸¤ä¸ªæ—¶é—´ç‚¹ç›¸å·®å¤šå°‘å¾®ç§’
+    n = (en->tv_sec-be->tv_sec)*1000000+(en->tv_usec-be->tv_usec);
+    // è½¬åŒ–ä¸ºæ¯«ç§’è¿”å›
+    return (float) (n/1000);
+}
 
-USHORT checkSum(USHORT *, int); // ¼ÆËãĞ£ÑéºÍ
-float timediff(struct timeval *, struct timeval *); // ¼ÆËãÊ±¼ä²î
-void pack(struct icmp *, int);  // ·â×°Ò»¸öICMP±¨ÎÄ
-int unpack(char *, int, char *);        // ¶Ô½ÓÊÕµ½µÄIP±¨ÎÄ½øĞĞ½â°ü
+/**
+ * icmp æŒ‡å‘éœ€è¦å°è£…çš„ICMPæŠ¥æ–‡ç»“æ„ä½“çš„æŒ‡é’ˆ
+ * sequence è¯¥æŠ¥æ–‡çš„åºå·
+ */
+void pack(struct icmp *icmp,int sequence){
+    icmp->type=ICMP_ECHO;
+    icmp->code=0;
+    icmp->checksum=0;
+    icmp->id=getpid();
+    icmp->sequence=sequence;
+    gettimeofday(&icmp->timestamp, 0);
+    icmp->checksum=checkSum((USHORT *)icmp, ICMP_SIZE);
+}
+
+/**
+ * buf  æŒ‡å‘æ¥æ”¶åˆ°çš„IPæŠ¥æ–‡ç¼“å†²åŒºçš„æŒ‡é’ˆ
+ * len  æ¥æ”¶åˆ°çš„IPæŠ¥æ–‡é•¿åº¦
+ * addr å‘é€ICMPæŠ¥æ–‡å“åº”çš„ä¸»æœºIPåœ°å€
+ */
+int unpack(char *buf,int len,char *addr){
+   int ipheadlen;
+   struct ip *ip;
+   struct icmp *icmp;
+   float rtt;          // è®°å½•å¾€è¿”æ—¶é—´
+   struct timeval en;  // è®°å½•æ¥æ”¶æŠ¥æ–‡çš„æ—¶é—´æˆ³
+   ip=(struct ip*)buf;
+
+   // è®¡ç®—ipé¦–éƒ¨é•¿åº¦ï¼Œå³ipé¦–éƒ¨çš„é•¿åº¦æ ‡è¯†ä¹˜4
+   ipheadlen=ip->hlen<<2;
+
+   // è¶Šè¿‡ipé¦–éƒ¨ï¼ŒæŒ‡å‘ICMPæŠ¥æ–‡
+   icmp=(struct icmp*)(buf+ipheadlen);
+
+   // ICMPæŠ¥æ–‡çš„æ€»é•¿åº¦
+   len-=ipheadlen;
+
+   // å¦‚æœå°äºICMPæŠ¥æ–‡é¦–éƒ¨é•¿åº¦8
+   if(len<8){
+        printf("ICMP packets\'s length is less than 8 bytes\n");
+        return -1;
+   }
+
+   // ç¡®ä¿æ˜¯æˆ‘ä»¬å‘çš„ICMP ECHOçš„å›åº”
+   if((icmp->type!=ICMP_ECHOREPLY)||(icmp->id != getpid())){
+       printf("ICMP packets are not send by us \n");
+       return -1;
+   }
+
+   // è®¡ç®—å¾€è¿”æ—¶é—´
+   gettimeofday(&en, 0);
+   rtt=timediff(&icmp->timestamp,&en);
+
+   // æ‰“å°ttlï¼Œrttï¼Œseq
+   printf("%d bytes from %s : icmp_seq=%u ttl=%d rtt=%fms \n",
+           len,addr,icmp->sequence,ip->ttl,rtt);
+   return 0;
+}
 
 
-int main(int argc, char * argv[]){
-    struct hostent *host;
+int main(int argc, char *argv[]){
     struct icmp sendicmp;
     struct sockaddr_in from;
     struct sockaddr_in to;
-    int fromlen = 0;
+    struct hostent *host;
+    socklen_t fromlen=0;
     int sockfd;
-    int nsend = 0;
-    int nreceived = 0;
-    int i, n;
+    int nsend=0;
+    int nreceived=0;
+    int plen;
     in_addr_t inaddr;
+    struct timeval toolong; //è¶…æ—¶æ—¶é—´
+    toolong.tv_sec=2;
+    toolong.tv_usec=0;
 
     memset(&from, 0, sizeof(struct sockaddr_in));
     memset(&to, 0, sizeof(struct sockaddr_in));
 
-    if(argc < 2){
-        printf("use : %s hostname/IP address \n", argv[0]);
-        exit(1);
-    }
-
-    // Éú³ÉÔ­Ê¼Ì×½Ó×Ö
-    if((sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1){
+    // ç”ŸæˆåŸå§‹å¥—æ¥å­—
+    if((sockfd=socket(AF_INET,SOCK_RAW,IPPROTO_ICMP))==-1){
         printf("socket() error \n");
         exit(1);
     }
 
-    // ÉèÖÃÄ¿µÄµØÖ·ĞÅÏ¢
-    to.sin_family = AF_INET;
+    //è®¾ç½®è¶…æ—¶æ—¶é—´
+    setsockopt(sockfd,SOL_SOCKET,SO_RCVTIMEO,&toolong, sizeof(toolong));
 
-    // ÅĞ¶ÏÊÇÓòÃû»¹ÊÇipµØÖ·
-    if(inaddr = inet_addr(argv[1]) == INADDR_NONE){
-        // ÊÇÓòÃû
-        if((host = gethostbyname(argv[1])) == NULL){
+    // è®¾ç½®ç›®çš„åœ°å€ä¿¡æ¯
+    to.sin_family=AF_INET;
+
+    // åˆ¤æ–­æ˜¯åŸŸåè¿˜æ˜¯ipåœ°å€
+    if((inaddr=inet_addr(argv[1]))==INADDR_NONE){
+        // æ˜¯åŸŸå
+        if((host=gethostbyname(argv[1]))==NULL){
             printf("gethostbyname() error \n");
             exit(1);
         }
-        to.sin_addr = *(struct in_addr *)host->h_addr_list[0];
+        to.sin_addr=*(struct in_addr *)host->h_addr_list[0];
     }else{
-        // ÊÇipµØÖ·
-        to.sin_addr.s_addr = inaddr;
+        // æ˜¯ipåœ°å€
+        to.sin_addr.s_addr=inaddr;
     }
 
-    // Êä³öÓòÃûipµØÖ·ĞÅÏ¢
-    printf("ping %s (%s) : %d bytes of data.\n", argv[1], inet_ntoa(to.sin_addr), (int)ICMP_SIZE);
+    // è¾“å‡ºåŸŸåipåœ°å€ä¿¡æ¯
+    printf("ping %s (%s) : %d bytes of data.\n",argv[1],inet_ntoa(to.sin_addr),(int)ICMP_SIZE);
 
-    //Ñ­»··¢ËÍ±¨ÎÄ¡¢½ÓÊÕ±¨ÎÄ
-    for(i = 0; i < NUM; i++){
-        nsend++;  // ·¢ËÍ´ÎÊı¼Ó1
-        memset(&sendicmp, 0, ICMP_SIZE);
-        pack(&sendicmp, nsend);
+    //å¾ªç¯å‘é€æŠ¥æ–‡ã€æ¥æ”¶æŠ¥æ–‡
+    for(int i=1; i<=NUM;i++){
+        nsend++;     // å‘é€æ¬¡æ•°åŠ 1
+        memset(&sendicmp,0,ICMP_SIZE);
+        pack(&sendicmp,nsend);
 
-        // ·¢ËÍ±¨ÎÄ
-        if(sendto(sockfd, &sendicmp, ICMP_SIZE, 0, (struct sockaddr *)&to, sizeof(to)) == -1){
+        // å‘é€æŠ¥æ–‡
+        if(sendto(sockfd,&sendicmp,ICMP_SIZE,0,(struct sockaddr *)&to,sizeof(to))==-1){
             printf("sendto() error \n");
             continue;
         }
 
-        // ½ÓÊÕ±¨ÎÄ
-        if((n = recvfrom(sockfd, buf, BUF_SIZE, 0, (struct sockaddr *)&from, &fromlen)) < 0){
+        // æ¥æ”¶æŠ¥æ–‡
+        if((plen=recvfrom(sockfd,buf,BUF_SIZE,0,(struct sockaddr *)&from,&fromlen))==-1){
             printf("recvform() error \n");
             continue;
         }
-        nreceived++;  // ½ÓÊÕ´ÎÊı¼Ó1
-        if(unpack(buf, n, inet_ntoa(from.sin_addr)) == -1){
+        nreceived++;  // æ¥æ”¶æ¬¡æ•°åŠ 1
+        if(unpack(buf,plen,inet_ntoa(to.sin_addr))==-1){
             printf("unpack() error \n");
         }
 
         sleep(1);
     }
 
-    // Êä³öÍ³¼ÆĞÅÏ¢
+    // è¾“å‡ºç»Ÿè®¡ä¿¡æ¯
     printf("---  %s ping statistics ---\n", argv[1]);
-    printf("%d packets transmitted, %d received, %%%d packet loss\n", nsend, nreceived,
-            (nsend - nreceived) / nsend * 100);
-
-    return 0;
+    printf("%d packets transmitted, %d received, %%%d packet loss\n",nsend,nreceived,
+            (nsend-nreceived)/nsend*100);
 }
 
-/**
- * addr Ö¸ÏòĞèĞ£ÑéÊı¾İ»º³åÇøµÄÖ¸Õë
- * len  ĞèĞ£ÑéÊı¾İµÄ×Ü³¤¶È£¨×Ö½Úµ¥Î»£©
- */
-USHORT checkSum(USHORT *addr, int len){
-    UINT sum = 0;
-    while(len > 1){
-        sum += *addr++;
-        len -= 2;
-    }
 
-    // ´¦ÀíÊ£ÏÂµÄÒ»¸ö×Ö½Ú
-    if(len == 1){
-        sum += *(UCHAR *)addr;
-    }
 
-    // ½«32Î»µÄ¸ß16Î»ÓëµÍ16Î»Ïà¼Ó
-    sum = (sum >> 16) + (sum & 0xffff);
-    sum += (sum >> 16);
 
-    return (USHORT) ~sum;
-}
-
-/**
- * ·µ»ØÖµµ¥Î»£ºms
- * begin ¿ªÊ¼Ê±¼ä´Á
- * end   ½áÊøÊ±¼ä´Á
- */
-float timediff(struct timeval *begin, struct timeval *end){
-    int n;
-    // ÏÈ¼ÆËãÁ½¸öÊ±¼äµãÏà²î¶àÉÙÎ¢Ãë
-    n = ( end->tv_sec - begin->tv_sec ) * 1000000
-        + ( end->tv_usec - begin->tv_usec );
-
-    // ×ª»¯ÎªºÁÃë·µ»Ø
-    return (float) (n / 1000);
-}
-
-/**
- * icmp Ö¸ÏòĞèÒª·â×°µÄICMP±¨ÎÄ½á¹¹ÌåµÄÖ¸Õë
- * sequence ¸Ã±¨ÎÄµÄĞòºÅ
- */
-void pack(struct icmp * icmp, int sequence){
-    icmp->type = ICMP_ECHO;
-    icmp->code = 0;
-    icmp->checksum = 0;
-    icmp->id = getpid();
-    icmp->sequence = sequence;
-    gettimeofday(&icmp->timestamp, 0);
-    icmp->checksum = checkSum((USHORT *)icmp, ICMP_SIZE);
-}
-
-/**
- * buf  Ö¸Ïò½ÓÊÕµ½µÄIP±¨ÎÄ»º³åÇøµÄÖ¸Õë
- * len  ½ÓÊÕµ½µÄIP±¨ÎÄ³¤¶È
- * addr ·¢ËÍICMP±¨ÎÄÏìÓ¦µÄÖ÷»úIPµØÖ·
- */
-int unpack(char * buf, int len, char * addr){
-   int i, ipheadlen;
-   struct ip * ip;
-   struct icmp * icmp;
-   float rtt;          // ¼ÇÂ¼Íù·µÊ±¼ä
-   struct timeval end; // ¼ÇÂ¼½ÓÊÕ±¨ÎÄµÄÊ±¼ä´Á
-
-   ip = (struct ip *)buf;
-
-   // ¼ÆËãipÊ×²¿³¤¶È£¬¼´ipÊ×²¿µÄ³¤¶È±êÊ¶³Ë4
-   ipheadlen = ip->hlen << 2;
-
-   // Ô½¹ıipÊ×²¿£¬Ö¸ÏòICMP±¨ÎÄ
-   icmp = (struct icmp *)(buf + ipheadlen);
-
-   // ICMP±¨ÎÄµÄ×Ü³¤¶È
-   len -= ipheadlen;
-
-   // Èç¹ûĞ¡ÓÚICMP±¨ÎÄÊ×²¿³¤¶È8
-   if(len < 8){
-        printf("ICMP packets\'s length is less than 8 \n");
-        return -1;
-   }
-
-   // È·±£ÊÇÎÒÃÇËù·¢µÄICMP ECHO»ØÓ¦
-   if(icmp->type != ICMP_ECHOREPLY ||
-           icmp->id != getpid()){
-       printf("ICMP packets are not send by us \n");
-       return -1;
-   }
-
-   // ¼ÆËãÍù·µÊ±¼ä
-   gettimeofday(&end, 0);
-   rtt = timediff(&icmp->timestamp, &end);
-
-   // ´òÓ¡ttl£¬rtt£¬seq
-   printf("%d bytes from %s : icmp_seq=%u ttl=%d rtt=%fms \n",
-           len, addr, icmp->sequence, ip->ttl, rtt);
-
-   return 0;
-}

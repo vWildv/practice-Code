@@ -104,7 +104,7 @@ int faddr(int pid,int pnum){
     while(!FIFO.empty()){
         quick_list x=FIFO.front();
         if(x.pid==pid&&x.pnum==pnum){
-            printf("�������\n");
+            printf("快表命中\n");
             flag=1; res=x.block;
         }
         tmp.push(FIFO.front());
@@ -117,7 +117,7 @@ int faddr(int pid,int pnum){
         }
         return res;
     }
-    printf("���δ����\n");
+    printf("快表未命中\n");
     res=locat(pl[pid],pnum);
     if(tmp.size()>=LIST_SIZE) tmp.pop();
     while(!tmp.empty()){
@@ -158,11 +158,11 @@ int main(){
             int id,sz;
             scanf("%d%d",&id,&sz);
             if(alloc(id,sz)==0){
-                printf("�ռ䲻��,����ʧ��\n");
+                printf("空间不足,分配失败\n");
                 continue;
             }
-            printf("����ɹ�,�����ڴ�λͼ����");
-            printf("(�����е�һλ������ҳ��ռ��,�ڶ�λΪ1,��Ϊ����ռ��,-1��Ϊҳ��ռ��):\n");
+            printf("分配成功,物理内存位图如下");
+            printf("(括号中第一位代表该页被占用,第二位为1,则为进程占用,-1则为页表占用):\n");
             for(int i=1;i<=SIZE;i++){
                 printf("(%d,%d)%s",bitmap[i-1].f1,bitmap[i-1].f2,i%6==0?"\n":" ");
             }
@@ -171,19 +171,19 @@ int main(){
         else if(op==2){
             int id,pnum;
             scanf("%d%d",&id,&pnum);
-            printf("���� %d �� %d ҳλ�� %d ��ҳ��\n",id,pnum,faddr(id,pnum));
+            printf("进程 %d 第 %d 页位于 %d 号页框\n",id,pnum,faddr(id,pnum));
         }
         else if(op==3){
             int id;
             scanf("%d",&id);
             if(ps[id].flag==0){
-                printf("���̲�λ���ڴ���\n");
+                printf("进程不位于内存中\n");
                 continue;
             }
             relea(pl[id]);
             ps[id].flag=0;
-            printf("�ͷ����,�����ڴ�λͼ����:");
-            printf("(�����е�һλ������ҳ�Ƿ�ռ��,�ڶ�λΪ1��Ϊ����ռ��,-1��Ϊҳ��ռ��):\n");
+            printf("释放完毕,物理内存位图如下:");
+            printf("(括号中第一位代表该页是否被占用,第二位为1则为进程占用,-1则为页表占用):\n");
             for(int i=1;i<=SIZE;i++){
                 printf("(%d,%d)%s",bitmap[i-1].f1,bitmap[i-1].f2,i%6==0?"\n":" ");
             }
@@ -193,10 +193,10 @@ int main(){
             int id;
             scanf("%d",&id);
             if(ps[id].flag==0){
-                printf("���̲�λ���ڴ���\n");
+                printf("进程不位于内存中\n");
                 continue;
             }
-            printf("���� %d ��СΪ %d ҳ,�� %d ��ҳ������,��߼�ҳ������%d��ҳ��\n"
+            printf("进程 %d 大小为 %d 页,由 %d 级页表管理,最高级页表处于%d号页框\n"
             ,id,ps[id].sz,ps[id].level,ps[id].block);
         }
     }

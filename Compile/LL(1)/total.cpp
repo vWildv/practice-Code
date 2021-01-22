@@ -7,21 +7,21 @@ bool l1[m+5][n+5];
 char Vn[]={'#','A','B','E','F','G','S','T','Z'};
 char Vt[]={'#','a','b','d','e','f','g','(',')','='};
 typedef pair<char,char> pi;
-vector<string>vstr[1000];//´æ·ÅÊäÈëµÄ´úÂë×ª³ÉÓï·¨¶¨ÒåºóµÄ×Ö·û´®
+vector<string>vstr[1000];//å­˜æ”¾è¾“å…¥çš„ä»£ç è½¬æˆè¯­æ³•å®šä¹‰åçš„å­—ç¬¦ä¸²
 stack<pi> stack1,stack2;
-map<char,int> Vnp,Vtp;//´æ·Å·ÇÖÕ½á·ûºÍÖÕ½á·û
-map<string,int> mV;//´æ·Å´Ê·¨·ÖÎöµÄ½á¹û£¬´ÓÎÄ¼şÖĞ¶ÁÈ¡»ñÈ¡
+map<char,int> Vnp,Vtp;//å­˜æ”¾éç»ˆç»“ç¬¦å’Œç»ˆç»“ç¬¦
+map<string,int> mV;//å­˜æ”¾è¯æ³•åˆ†æçš„ç»“æœï¼Œä»æ–‡ä»¶ä¸­è¯»å–è·å–
 struct expre{
     char l;
     string r;
 };
 vector<expre> v;
-stack<char>ss;//¹æÔ¼Ê±Ê¹ÓÃµÄÕ»
+stack<char>ss;//è§„çº¦æ—¶ä½¿ç”¨çš„æ ˆ
 map<char,vector<char> >first_vt,last_vt;
 int cmp1[305][305];// 0 == 1 < 2 >
-int hash_Vn[105];//ÓÃÀ´ÅĞ¶ÏÒ»¸ö×Ö·ûÊÇ²»ÊÇ·ÇÖÕ½á·ûµÄhashÊı×é
-int hash_Vt[105];//ÓÃÀ´ÅĞ¶ÏÒ»¸ö×Ö·ûÊÇ²»ÊÇÖÕ½á·ûµÄhashÊı×é
-char Cto(string str){ //°ÑÊµ¼Ê´úÂë×ª»»³ÉÎÄ·¨ÖĞ¶¨ÒåµÄ¸ñÊ½
+int hash_Vn[105];//ç”¨æ¥åˆ¤æ–­ä¸€ä¸ªå­—ç¬¦æ˜¯ä¸æ˜¯éç»ˆç»“ç¬¦çš„hashæ•°ç»„
+int hash_Vt[105];//ç”¨æ¥åˆ¤æ–­ä¸€ä¸ªå­—ç¬¦æ˜¯ä¸æ˜¯ç»ˆç»“ç¬¦çš„hashæ•°ç»„
+char Cto(string str){ //æŠŠå®é™…ä»£ç è½¬æ¢æˆæ–‡æ³•ä¸­å®šä¹‰çš„æ ¼å¼
     if(hash_Vt[str[0]]&&hash_Vn[str[0]]&&str.size()==1&&mV[str]!=2){
         return str[0];
     }
@@ -41,40 +41,40 @@ char Cto(string str){ //°ÑÊµ¼Ê´úÂë×ª»»³ÉÎÄ·¨ÖĞ¶¨ÒåµÄ¸ñÊ½
         return 'd';
     }
 }
-void Ctodo(string str){  //¶ÔÎÄ·¨½øĞĞ¹æÔ¼´¦Àí,²¢ÇÒÊä³öÖĞ¼ä¹ı³Ì
+void Ctodo(string str){  //å¯¹æ–‡æ³•è¿›è¡Œè§„çº¦å¤„ç†,å¹¶ä¸”è¾“å‡ºä¸­é—´è¿‡ç¨‹
     str+='#';
-    cout<<"¿ªÊ¼¶ÔÊäÈë´®"<<str<<"½øĞĞ¹æÔ¼"<<endl;
+    cout<<"å¼€å§‹å¯¹è¾“å…¥ä¸²"<<str<<"è¿›è¡Œè§„çº¦"<<endl;
     int cnt = 0;
     ss.push('#');
     ss.push(str[cnt++]);
     while(!ss.empty()||cnt<str.size()){
-        cout<<"µ±Ç°Õ»¶¥ÔªËØ"<<ss.top()<<endl;
-        cout<<"µ±Ç°ÕıÔÚÊäÈë×Ö·û"<<str[cnt]<<endl;
+        cout<<"å½“å‰æ ˆé¡¶å…ƒç´ "<<ss.top()<<endl;
+        cout<<"å½“å‰æ­£åœ¨è¾“å…¥å­—ç¬¦"<<str[cnt]<<endl;
         if(ss.top()=='#'&&str[cnt]=='#'){
-            cout<<"½ÓÊÕ"<<endl;
+            cout<<"æ¥æ”¶"<<endl;
             break;
         }
         else if(cmp1[(int)ss.top()][(int)str[cnt]]==1){
-            cout<<"ÒÆ½ø"<<endl;
+            cout<<"ç§»è¿›"<<endl;
             ss.push(str[cnt]);
             cnt++;
         }
         else if(cmp1[(int)ss.top()][(int)str[cnt]]==2){
-            cout<<"¹æÔ¼"<<endl;
+            cout<<"è§„çº¦"<<endl;
             ss.pop();
         }
         else if(cmp1[(int)ss.top()][(int)str[cnt]]==0){
-            cout<<"ÒÆ½ø"<<endl;
+            cout<<"ç§»è¿›"<<endl;
             ss.push(str[cnt]);
             cnt++;
         }
         else{
-            cout<<"´Ë¾ä×ÓÎŞ·¨¹æÔ¼"<<endl;
+            cout<<"æ­¤å¥å­æ— æ³•è§„çº¦"<<endl;
             break;
         }
     }
 }
-void hash_num(){ // ¶ÔÖÕ½á·ûºÍ·ÇÖÕ½á·û½øĞĞhash´¦Àí
+void hash_num(){ // å¯¹ç»ˆç»“ç¬¦å’Œéç»ˆç»“ç¬¦è¿›è¡Œhashå¤„ç†
     for(int i=0; i<strlen(Vn);i++){
         hash_Vn[(int)Vn[i]] = 1;
     }
@@ -82,7 +82,7 @@ void hash_num(){ // ¶ÔÖÕ½á·ûºÍ·ÇÖÕ½á·û½øĞĞhash´¦Àí
         hash_Vt[(int)Vt[i]] = 1;
     }
 }
-void Getpqfun(){ //µÃµ½ÓÅÏÈº¯Êı²¢Êä³ö
+void Getpqfun(){ //å¾—åˆ°ä¼˜å…ˆå‡½æ•°å¹¶è¾“å‡º
     int f1[30];
     int g1[30];
     for(int i=0;i<30;i++) f1[i] =1;
@@ -121,7 +121,7 @@ void Getpqfun(){ //µÃµ½ÓÅÏÈº¯Êı²¢Êä³ö
         printf("\n");
     }
 }
-void GetpqMat(){//µÃµ½ÓÅÏÈ¾ØÕó²¢Êä³ö
+void GetpqMat(){//å¾—åˆ°ä¼˜å…ˆçŸ©é˜µå¹¶è¾“å‡º
     memset(cmp1,-1,sizeof(cmp1));
     int len = v.size();
     for(int i=0; i<len; i++){
@@ -152,8 +152,8 @@ void GetpqMat(){//µÃµ½ÓÅÏÈ¾ØÕó²¢Êä³ö
     }
     cmp1[(int)'#'][(int)'#'] = 0;
 }
-void Printpqto(int cnt){ //µ÷ÓÃ¹æÔ¼º¯Êı ²¢µ÷ÕûÊä³ö¸ñÊ½
-    cout<<"¿ªÊ¼½øĞĞËã·ûÓÅÏÈ¹æÔ¼"<<endl;
+void Printpqto(int cnt){ //è°ƒç”¨è§„çº¦å‡½æ•° å¹¶è°ƒæ•´è¾“å‡ºæ ¼å¼
+    cout<<"å¼€å§‹è¿›è¡Œç®—ç¬¦ä¼˜å…ˆè§„çº¦"<<endl;
     for(int i=0;i<cnt;i++){
         string _str ="";
         for(int j=0;j<vstr[i].size();j++){
@@ -161,12 +161,12 @@ void Printpqto(int cnt){ //µ÷ÓÃ¹æÔ¼º¯Êı ²¢µ÷ÕûÊä³ö¸ñÊ½
         }
         cout<<_str<<endl;
         Ctodo(_str);
-        cout<<"ÊäÈë´®"<<_str<<"¿ÉÒÔ½ÓÊÕ"<<endl;
+        cout<<"è¾“å…¥ä¸²"<<_str<<"å¯ä»¥æ¥æ”¶"<<endl;
     }
 }
-void PrintGetpqMat(){//µ÷ÓÃÓÅÏÈ¾ØÕóº¯Êı ²¢µ÷ÕûÒ»ÏÂÊä³ö¸ñÊ½
+void PrintGetpqMat(){//è°ƒç”¨ä¼˜å…ˆçŸ©é˜µå‡½æ•° å¹¶è°ƒæ•´ä¸€ä¸‹è¾“å‡ºæ ¼å¼
     hash_num();
-    cout<<"Ëã·ûÓÅÏÈ¹ØÏµ¾ØÕó"<<endl;
+    cout<<"ç®—ç¬¦ä¼˜å…ˆå…³ç³»çŸ©é˜µ"<<endl;
     GetpqMat();
     printf("\t");
 ;    for(int i=0;i<strlen(Vt);i++){
@@ -184,11 +184,11 @@ void PrintGetpqMat(){//µ÷ÓÃÓÅÏÈ¾ØÕóº¯Êı ²¢µ÷ÕûÒ»ÏÂÊä³ö¸ñÊ½
         printf("\n");
     }
 }
-void PrintGetpqfun(){ //µ÷ÓÃÓÅÏÈ¹ØÏµº¯Êı£¬Êä³öÓÅÏÈº¯Êı±í
-    cout<<"ÓÅÏÈº¯Êı±í"<<endl;
+void PrintGetpqfun(){ //è°ƒç”¨ä¼˜å…ˆå…³ç³»å‡½æ•°ï¼Œè¾“å‡ºä¼˜å…ˆå‡½æ•°è¡¨
+    cout<<"ä¼˜å…ˆå‡½æ•°è¡¨"<<endl;
     Getpqfun();
 }
-int Getcnt(){ //°Ñ´Ê·¨·ÖÎöµÄ½á¹û´ÓÎÄ¼şÖĞµ¼³öµ½map mVÖĞ£¬·½±ã½ÓÏÂÀ´´úÂëÏò¶¨ÒåµÄÓï·¨¹æÔò½øĞĞ×ª»»
+int Getcnt(){ //æŠŠè¯æ³•åˆ†æçš„ç»“æœä»æ–‡ä»¶ä¸­å¯¼å‡ºåˆ°map mVä¸­ï¼Œæ–¹ä¾¿æ¥ä¸‹æ¥ä»£ç å‘å®šä¹‰çš„è¯­æ³•è§„åˆ™è¿›è¡Œè½¬æ¢
     ifstream myfile1("token.txt");
     string str;
     string str1;
@@ -223,7 +223,7 @@ int Getcnt(){ //°Ñ´Ê·¨·ÖÎöµÄ½á¹û´ÓÎÄ¼şÖĞµ¼³öµ½map mVÖĞ£¬·½±ã½ÓÏÂÀ´´úÂëÏò¶¨ÒåµÄÓï
     return nMax;
 }
 void Printvstr(int cnt){
-    cout<<"ĞèÒª¹æÔ¼µÄÊäÈë´®ÓĞ"<<endl;
+    cout<<"éœ€è¦è§„çº¦çš„è¾“å…¥ä¸²æœ‰"<<endl;
     for(int i=0;i<cnt;i++){
         string _str ="";
         for(int j=0;j<vstr[i].size();j++){
@@ -360,11 +360,11 @@ int main(){
         cout<<endl;
     }
 
-    PrintGetpqMat(); // Êä³öËã·ûÓÅÏÈ¾ØÕó
-    PrintGetpqfun(); // Êä³öËã·ûÓÅÏÈº¯Êı
-    int cnt = Getcnt();//½«´æ·Å´Ê·¨·ÖÎö½á¹ûµÄÎÄ¼şÈ¡³ö´æ·Å½ømapÖĞ£¬·µ»Ø´úÂëĞĞÊı´Ê·¨·ÖÎöÖĞÒ»¸ö·ÖºÅËãÒ»ĞĞ¡£
-    Printvstr(cnt);//½«´úÂë×ª³ÉÓï·¨¶¨ÒåµÄ¸ñÊ½´òÓ¡³öÀ´
-    Printpqto(cnt);  // Êä³ö¹æÔ¼¹ı³ÌÒÔ¼°½á¹û
+    PrintGetpqMat(); // è¾“å‡ºç®—ç¬¦ä¼˜å…ˆçŸ©é˜µ
+    PrintGetpqfun(); // è¾“å‡ºç®—ç¬¦ä¼˜å…ˆå‡½æ•°
+    int cnt = Getcnt();//å°†å­˜æ”¾è¯æ³•åˆ†æç»“æœçš„æ–‡ä»¶å–å‡ºå­˜æ”¾è¿›mapä¸­ï¼Œè¿”å›ä»£ç è¡Œæ•°è¯æ³•åˆ†æä¸­ä¸€ä¸ªåˆ†å·ç®—ä¸€è¡Œã€‚
+    Printvstr(cnt);//å°†ä»£ç è½¬æˆè¯­æ³•å®šä¹‰çš„æ ¼å¼æ‰“å°å‡ºæ¥
+    Printpqto(cnt);  // è¾“å‡ºè§„çº¦è¿‡ç¨‹ä»¥åŠç»“æœ
     return 0;
 }
 
